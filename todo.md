@@ -15,3 +15,4 @@
 - [x] Add a command-line batch runner for multiple input images and verify its outputs.
 - [x] Add a concise Python Mars-only input-gate example for backend integration.
 - [x] Stress-test the Mars-only gate with a tricky non-Mars input and document the mitigation for any bypass risk.
+- [x] Run a compact multi-scenario verification of the hardened Mars-source gate and report the results plainly.

@@ -26,3 +26,14 @@ if decision.run_visual_complexity:
 The frontend should send a required `declared_target` field and an optional `source_url`, but it must not be the only enforcement point. The backend owns the final call to `mars_only_gate()` so an API request cannot bypass the rule. The backend must fetch or select the canonical image through an approved source workflow and set `source_verified=True` only when `exact_source_match()` confirms that the uploaded bytes are the same bytes.
 
 To support a different trusted archive, add only team-approved domains to `TRUSTED_MARS_SOURCE_DOMAINS`. Do not turn a simple colour or texture heuristic into an automatic planetary identity claim; it is not robust enough to safely authorize the Mars-trained model.
+
+### Quick Image-Byte Test
+
+Use the image-byte edge-case runner to check four real workflow scenarios with a curated Mars file and a lunar file:
+
+```bash
+cd examples
+python3 gate_image_edge_cases.py /path/to/curated-mars-image.jpg /path/to/lunar-image.jpg
+```
+
+It checks a verified Mars image, a lunar image with forged Mars metadata, an altered Mars copy, and an honestly declared lunar image.
