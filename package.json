@@ -6,6 +6,7 @@
   "description": "Backend-ready terrain-image analysis combining ONNX segmentation and deterministic visual-complexity evidence.",
   "scripts": {
     "build": "tsc && cp -R src/models dist/models",
+    "batch": "pnpm build && node scripts/run-batch.mjs",
     "check": "tsc --noEmit",
     "test": "vitest run"
   },

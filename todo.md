@@ -12,3 +12,4 @@
 - [x] Rewrite the README to clearly distinguish trained-model analysis from computer-vision visual-complexity analysis.
 - [x] Make the GitHub repository public and verify the public link.
 - [x] Dry-run both analysis paths on an independently sourced real Mars image without a UI.
+- [x] Add a command-line batch runner for multiple input images and verify its outputs.

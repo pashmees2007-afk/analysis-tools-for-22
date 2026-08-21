@@ -61,6 +61,17 @@ src/models/mobilenetv3_unet_v1.onnx.data
 
 The `.onnx.data` file contains external tensor data required by the ONNX model; it must stay beside the `.onnx` file in development and in the deployment build.
 
+## Batch Test Multiple Images
+
+To test a folder of images before the UI exists, run the batch command. It writes separate model and visual-complexity artifacts for every PNG, JPG, JPEG, or WEBP file, plus one `batch-summary.json` file.
+
+```bash
+pnpm batch -- /path/to/input-images /path/to/batch-output
+```
+
+See [`docs/batch-testing.md`](docs/batch-testing.md) for the output structure and failure handling.
+The command was verified on two Mars-terrain inputs; see [`docs/batch-dry-run-results.md`](docs/batch-dry-run-results.md).
+
 ## Repository Map
 
 | Path | Purpose |
