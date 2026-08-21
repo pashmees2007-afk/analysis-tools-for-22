@@ -8,3 +8,6 @@
 - [x] Implement a unified analysis request and result contract for model predictions and OpenCV evidence.
 - [x] Add backend-ready routes and isolated analysis modules with setup documentation.
 - [x] Publish the independent repository to a private GitHub repository and provide its link.
+- [ ] Diagnose and resolve the reported GitHub repository access problem.
+- [x] Rewrite the README to clearly distinguish trained-model analysis from computer-vision visual-complexity analysis.
+- [ ] Make the GitHub repository public and verify the public link.
