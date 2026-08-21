@@ -72,6 +72,10 @@ pnpm batch -- /path/to/input-images /path/to/batch-output
 See [`docs/batch-testing.md`](docs/batch-testing.md) for the output structure and failure handling.
 The command was verified on two Mars-terrain inputs; see [`docs/batch-dry-run-results.md`](docs/batch-dry-run-results.md).
 
+## Mars-Only Gate
+
+The trained model should run only when the backend accepts an image as a Mars input. The repository includes a small Python example that returns `accepted`, `unknown`, or `blocked` and preserves generic visual-complexity analysis for non-Mars or unverified images. See [`examples/mars_only_gate.py`](examples/mars_only_gate.py) and [`docs/mars-only-gate.md`](docs/mars-only-gate.md).
+
 ## Repository Map
 
 | Path | Purpose |
