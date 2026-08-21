@@ -74,7 +74,7 @@ The command was verified on two Mars-terrain inputs; see [`docs/batch-dry-run-re
 
 ## Mars-Only Gate
 
-The trained model should run only when the backend accepts an image as a Mars input. The repository includes a small Python example that returns `accepted`, `unknown`, or `blocked` and preserves generic visual-complexity analysis for non-Mars or unverified images. See [`examples/mars_only_gate.py`](examples/mars_only_gate.py) and [`docs/mars-only-gate.md`](docs/mars-only-gate.md).
+The trained model should run only when the backend accepts an image as a Mars input. The repository includes a small Python example that returns `accepted`, `unknown`, or `blocked` and preserves generic visual-complexity analysis for non-Mars or unverified images. A trusted URL alone is not enough: the backend must verify that the uploaded bytes match an approved source image. See [`examples/mars_only_gate.py`](examples/mars_only_gate.py), [`docs/mars-only-gate.md`](docs/mars-only-gate.md), and the [`adversarial dry-run`](docs/mars-gate-adversarial-dry-run.md).
 
 ## Repository Map
 

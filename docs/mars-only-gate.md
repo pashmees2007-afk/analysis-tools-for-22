@@ -4,14 +4,15 @@
 
 | Gate status | Mars-trained model | Generic visual-complexity analysis | Meaning |
 |---|---|---|---|
-| `accepted` | Run | Run | The request declares Mars and supplies a trusted Mars source URL. |
-| `unknown` | Do not run | Optional | The request declares Mars but lacks a trusted source URL. |
+| `accepted` | Run | Run | The request declares Mars, uses a trusted Mars source URL, and the backend verifies the uploaded bytes against the source bytes. |
+| `unknown` | Do not run | Optional | The request declares Mars but does not have a backend-verified source match. |
 | `blocked` | Do not run | Optional | The request declares another target, such as the Moon or Earth. |
 
 Use the result in a FastAPI, Flask, or other backend before any Mars-model call:
 
 ```python
-decision = mars_only_gate(payload.declared_target, payload.source_url)
+source_verified = exact_source_match(upload_bytes, canonical_source_bytes)
+decision = mars_only_gate(payload.declared_target, payload.source_url, source_verified)
 
 if decision.run_mars_model:
     model_result = run_mars_terrain_model(image_bytes)
@@ -22,6 +23,6 @@ if decision.run_visual_complexity:
     cv_result = run_visual_complexity(image_bytes)
 ```
 
-The frontend should send a required `declared_target` field and an optional `source_url`, but it must not be the only enforcement point. The backend owns the final call to `mars_only_gate()` so an API request cannot bypass the rule.
+The frontend should send a required `declared_target` field and an optional `source_url`, but it must not be the only enforcement point. The backend owns the final call to `mars_only_gate()` so an API request cannot bypass the rule. The backend must fetch or select the canonical image through an approved source workflow and set `source_verified=True` only when `exact_source_match()` confirms that the uploaded bytes are the same bytes.
 
 To support a different trusted archive, add only team-approved domains to `TRUSTED_MARS_SOURCE_DOMAINS`. Do not turn a simple colour or texture heuristic into an automatic planetary identity claim; it is not robust enough to safely authorize the Mars-trained model.
