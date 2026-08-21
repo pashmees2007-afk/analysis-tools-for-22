@@ -76,6 +76,10 @@ The command was verified on two Mars-terrain inputs; see [`docs/batch-dry-run-re
 
 The trained model should run only when the backend accepts an image as a Mars input. The repository includes a small Python example that returns `accepted`, `unknown`, or `blocked` and preserves generic visual-complexity analysis for non-Mars or unverified images. A trusted URL alone is not enough: the backend must verify that the uploaded bytes match an approved source image. See [`examples/mars_only_gate.py`](examples/mars_only_gate.py), [`docs/mars-only-gate.md`](docs/mars-only-gate.md), and the [`adversarial dry-run`](docs/mars-gate-adversarial-dry-run.md).
 
+## Judge Guide
+
+For a plain-English walkthrough of the full analysis layer, including model specifications, evaluation metrics, computer-vision basics, source verification, limitations, and ready-to-use judge answers, see [`docs/judge-guide-analysis-tool.md`](docs/judge-guide-analysis-tool.md).
+
 ## Repository Map
 
 | Path | Purpose |
