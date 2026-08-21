@@ -1,0 +1,24 @@
+{
+  "name": "analysis-tools-for-22",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend-ready terrain-image analysis combining ONNX segmentation and deterministic visual-complexity evidence.",
+  "scripts": {
+    "build": "tsc && cp -R src/models dist/models",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "onnxruntime-node": "^1.27.0",
+    "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "typescript": "5.9.3",
+    "vitest": "^2.1.4"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
