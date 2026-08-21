@@ -3,5 +3,6 @@ dist/
 coverage/
 .DS_Store
 *.log
+__pycache__/
 dry-run-output/
 batch-output/
