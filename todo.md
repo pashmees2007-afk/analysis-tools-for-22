@@ -11,3 +11,4 @@
 - [x] Diagnose and resolve the reported GitHub repository access problem.
 - [x] Rewrite the README to clearly distinguish trained-model analysis from computer-vision visual-complexity analysis.
 - [x] Make the GitHub repository public and verify the public link.
+- [x] Dry-run both analysis paths on an independently sourced real Mars image without a UI.
