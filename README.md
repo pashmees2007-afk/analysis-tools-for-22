@@ -72,6 +72,10 @@ pnpm batch -- /path/to/input-images /path/to/batch-output
 See [`docs/batch-testing.md`](docs/batch-testing.md) for the output structure and failure handling.
 The command was verified on two Mars-terrain inputs; see [`docs/batch-dry-run-results.md`](docs/batch-dry-run-results.md).
 
+## TerrainLens Frontend
+
+The repository now includes [`frontend/`](frontend/), a new TerrainLens React application built from scratch. It uses server-side proxy routes to keep the FastAPI API key out of the browser, supports real image intake and current backend responses, and displays only the evidence fields currently returned by the API. See [`frontend/README.md`](frontend/README.md) for configuration, validation, available capabilities, and backend limitations.
+
 ## Mars-Only Gate
 
 The trained model should run only when the backend accepts an image as a Mars input. The repository includes a small Python example that returns `accepted`, `unknown`, or `blocked` and preserves generic visual-complexity analysis for non-Mars or unverified images. A trusted URL alone is not enough: the backend must verify that the uploaded bytes match an approved source image. See [`examples/mars_only_gate.py`](examples/mars_only_gate.py), [`docs/mars-only-gate.md`](docs/mars-only-gate.md), and the [`adversarial dry-run`](docs/mars-gate-adversarial-dry-run.md).

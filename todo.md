@@ -18,3 +18,11 @@
 - [x] Run a compact multi-scenario verification of the hardened Mars-source gate and report the results plainly.
 - [ ] Present the latest hardened Mars-source gate and edge-case test code for review before further changes.
 - [x] Prepare a simple judge-ready guide explaining the architecture, trained model, computer vision, validation, safeguards, and limitations.
+
+## TerrainLens Frontend
+
+- [x] Create a new TerrainLens frontend from scratch without reusing any existing application UI.
+- [x] Add a server-side proxy boundary that keeps the backend API key out of the browser and normalizes real analysis responses.
+- [x] Implement image intake, engine configuration, health state, real analysis requests, and explicit fallback/error handling.
+- [x] Build the image-first evidence workspace with available artifacts, metrics, candidate zones, and limited audit-history display.
+- [x] Validate the frontend against the current backend contract, document unavailable capabilities, and publish the work to analysis-tools-for-22; full live analysis requires server-only backend URL and API-key configuration.
