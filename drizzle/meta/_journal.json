@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1786985269855,
+      "tag": "0000_adorable_the_order",
+      "breakpoints": true
+    }
+  ]
+}
