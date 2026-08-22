@@ -154,3 +154,17 @@
 ## OpenCV Dry Run
 
 - [x] Run and inspect an isolated OpenCV-only Mars-image terrain-complexity proof of concept using newly sourced input imagery.
+
+## Independent Copy Verification
+
+- [x] Verify the live ML path with an uploaded Mars terrain image: server segmentation completed, generated 256 × 256 prediction artifacts, and displayed the Server prediction result.
+- [x] Verify the CV review experience for the built-in terrain sample: saved preprocessing, edge, circular-feature, and hazard artifacts render correctly; CV is currently saved demonstration evidence, not per-upload runtime processing.
+
+## Dynamic CV for Uploads
+
+- [x] Define a deterministic per-upload CV result contract containing derived maps, circular-feature candidates, and grid-level visual-complexity evidence.
+- [x] Implement server-side preprocessing, edge, circle-candidate, and grid-evidence generation for uploaded images.
+- [x] Return CV artifacts and metrics with ML segmentation, and render only the upload-specific CV evidence after a live analysis.
+- [x] Add automated tests and run an end-to-end uploaded-image validation for the combined ML-plus-CV pipeline.
+- [x] Derive every live-upload mission summary and progress label from the dynamic CV result rather than the saved sample defaults.
+- [x] Auto-select the lowest-complexity uploaded-image grid cell and confirm the live summary matches the ranked grid.

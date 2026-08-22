@@ -44,6 +44,18 @@ type BackendSegmentationResult = {
   width: number;
   height: number;
   classCounts: Array<{ classId: number; className: string; pixels: number; share: number }>;
+  cv: {
+    preprocessingUrl: string;
+    edgeUrl: string;
+    circlesUrl: string;
+    hazardUrl: string;
+    edgePixelCount: number;
+    edgeDensity: number;
+    meanGradient: number;
+    circularFeatures: Array<{ id: string; x: number; y: number; r: number; score: number }>;
+    zones: Zone[];
+    disclaimer: string;
+  };
   disclaimer: string;
 };
 
@@ -215,6 +227,10 @@ export default function Home() {
   const analyzeMutation = trpc.segmentation.analyze.useMutation({
     onSuccess: result => {
       setBackendResult(result);
+      const lowestComplexityZone = [...result.cv.zones].sort(
+        (a, b) => a.risk - b.risk || a.circlePressure - b.circlePressure
+      )[0];
+      if (lowestComplexityZone) setSelectedId(lowestComplexityZone.id);
       setStage("results");
       setView("prediction");
       setProgress(100);
@@ -227,24 +243,32 @@ export default function Home() {
     },
   });
 
+  const sourceName = upload ? uploadName : "curiosity_image_01.png";
+  const activeCv = backendResult?.cv ?? null;
+  const isLiveCv = Boolean(upload && activeCv);
+  const analysisZones = activeCv?.zones ?? zones;
+  const analysisFeatures = activeCv?.circularFeatures ?? circularFeatures;
   const selected = useMemo(
-    () => zones.find(zone => zone.id === selectedId) ?? zones[24],
-    [selectedId]
+    () => analysisZones.find(zone => zone.id === selectedId) ?? analysisZones[analysisZones.length - 1],
+    [analysisZones, selectedId]
   );
   const ranking = useMemo(
     () =>
-      [...zones]
+      [...analysisZones]
         .sort((a, b) => a.risk - b.risk || a.circlePressure - b.circlePressure)
         .slice(0, 5),
-    []
+    [analysisZones]
   );
-  const sourceName = upload ? uploadName : "curiosity_image_01.png";
   const primaryImage =
     view === "prediction" && backendResult
       ? backendResult.predictionUrl
-      : view === "hazards" && backendResult
-        ? backendResult.overlayUrl
-        : upload ?? (view === "hazards" ? assets.hazards : assets.raw);
+      : view === "hazards" && activeCv
+        ? activeCv.hazardUrl
+        : view === "hazards" && backendResult
+          ? backendResult.overlayUrl
+          : view === "raw" && backendResult
+            ? backendResult.sourceUrl
+            : upload ?? (view === "hazards" ? assets.hazards : assets.raw);
   const isVerified = !upload;
   const selectedLabeledTerrain =
     labeledTerrainSamples.find(sample => sample.id === labelSampleId) ??
@@ -364,14 +388,16 @@ export default function Home() {
     const report = {
       mission: "MB-01",
       source_image: sourceName,
-      evidence_state: isVerified ? "verified OpenCV sample" : "staged upload",
-      circular_feature_candidates: 22,
-      edge_pixels: 10484,
-      risk_engine:
-        "0.32 × normalized edge density + 0.68 × circular-feature pressure",
-      recommended_zone: selected.id,
-      risk_score: `${selected.risk.toFixed(1)} / 10`,
-      reason: reason(selected),
+      evidence_state: isLiveCv ? "live deterministic CV plus ML segmentation" : "verified saved CV sample",
+      circular_feature_candidates: analysisFeatures.length,
+      edge_pixels: activeCv?.edgePixelCount ?? 10484,
+      mean_gradient: activeCv?.meanGradient ?? null,
+      visual_complexity_engine: "0.68 × normalized edge density + 0.32 × circular-shape pressure",
+      lowest_complexity_zone: selected.id,
+      complexity_score: `${selected.risk.toFixed(1)} / 10`,
+      interpretation: isLiveCv
+        ? "Visual-complexity evidence only; this score is not a terrain-safety or landing recommendation."
+        : reason(selected),
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], {
       type: "application/json",
@@ -393,33 +419,36 @@ export default function Home() {
     "RISK MAP GENERATED",
     "LANDING ZONES RANKED",
   ];
-  const evidence = [
-    {
-      label: "RAW TERRAIN",
-      image: assets.raw,
-      description: "Original 500 × 500 source plate.",
-    },
-    {
-      label: "PREPROCESSING",
-      image: assets.normalized,
-      description: "Grayscale contrast-normalized working image.",
-    },
-    {
-      label: "ROCK EDGES",
-      image: assets.edges,
-      description: "Canny response overlaid in restrained red.",
-    },
-    {
-      label: "CIRCULAR FEATURES",
-      image: assets.circles,
-      description: "Hough circle candidates and centers.",
-    },
-    {
-      label: "COMBINED HAZARDS",
-      image: assets.hazards,
-      description: "Saved OpenCV annotated output.",
-    },
-  ];
+  const workflowSteps = isLiveCv
+    ? [
+        ["01", "Acquire", "upload stored"],
+        ["02", "Process", "ML + CV complete"],
+        ["03", "Evidence", "artifacts ready"],
+        ["04", "Labels", "terrain classes"],
+        ["05", "Review", `${selected.id} selected`],
+      ]
+    : [
+        ["01", "Acquire", "terrain loaded"],
+        ["02", "Process", "vision pass"],
+        ["03", "Evidence", "inspect signals"],
+        ["04", "Labels", "review terrain classes"],
+        ["05", "Decide", "E5 recommended"],
+      ];
+  const evidence = activeCv
+    ? [
+        { label: "RAW TERRAIN", image: backendResult?.sourceUrl ?? upload ?? assets.raw, description: "Uploaded source image stored with this analysis." },
+        { label: "PREPROCESSING", image: activeCv.preprocessingUrl, description: "Live contrast-normalized grayscale working image." },
+        { label: "ROCK EDGES", image: activeCv.edgeUrl, description: "Live Sobel-gradient edge response shown in restrained red." },
+        { label: "CIRCULAR FEATURES", image: activeCv.circlesUrl, description: "Live circular-shape candidates derived from connected edge evidence." },
+        { label: "COMBINED HAZARDS", image: activeCv.hazardUrl, description: "Live visual-complexity overlay; it is not a terrain-safety map." },
+      ]
+    : [
+        { label: "RAW TERRAIN", image: assets.raw, description: "Original 500 × 500 source plate." },
+        { label: "PREPROCESSING", image: assets.normalized, description: "Grayscale contrast-normalized working image." },
+        { label: "ROCK EDGES", image: assets.edges, description: "Canny response overlaid in restrained red." },
+        { label: "CIRCULAR FEATURES", image: assets.circles, description: "Hough circle candidates and centers." },
+        { label: "COMBINED HAZARDS", image: assets.hazards, description: "Saved OpenCV annotated output." },
+      ];
   const selectedEvidence =
     evidence.find(item => item.label === evidenceLayer) ?? evidence[0];
 
@@ -475,19 +504,16 @@ export default function Home() {
       <section id="mission" className="border-b border-white/12">
         <div className="mx-auto grid max-w-[1500px] gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[.72fr_1.28fr] lg:px-10 lg:py-16">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[.19em] text-[#E26D61]">
-              Descent brief / 01
-            </p>
+            <p className="font-mono text-[10px] uppercase tracking-[.19em] text-[#E26D61]">{isLiveCv ? "Live terrain analysis / 01" : "Descent brief / 01"}</p>
             <h1 className="mt-4 font-tech text-4xl tracking-[-.055em] text-white sm:text-5xl">
-              Terrain loaded. Descent assessment ready.
+              {isLiveCv ? "Terrain analyzed. Evidence ready for review." : "Terrain loaded. Descent assessment ready."}
             </h1>
             <p className="mt-5 max-w-md text-sm leading-6 text-white/60">
-              The verified terrain pass has resolved a preferred approach area.
-              Inspect the computer-vision evidence before committing descent.
+              {isLiveCv ? "The uploaded image has live ML segmentation and deterministic CV evidence. Inspect the derived maps and grid values before making any external decision." : "The verified terrain pass has resolved a preferred approach area. Inspect the computer-vision evidence before committing descent."}
             </p>
             <div className="mt-8 border-t border-white/12 pt-5 font-mono text-[9px] uppercase tracking-[.14em] text-white/45">
               <p>Target / Mars</p>
-              <p className="mt-2">Model / OpenCV classical vision</p>
+              <p className="mt-2">Model / {isLiveCv ? "ML segmentation + deterministic CV" : "OpenCV classical vision"}</p>
               <p className="mt-2">Grid / 5 × 5 candidate zones</p>
             </div>
             <div className="mt-7 border-l-2 border-[#E13C2E] bg-[#100B09] px-4 py-4">
@@ -495,10 +521,10 @@ export default function Home() {
                 Current mission outcome
               </p>
               <div className="mt-2 flex items-end gap-3">
-                <p className="font-tech text-4xl tracking-[-.07em] text-white">E5</p>
-                <p className="pb-1 font-mono text-[10px] uppercase tracking-[.13em] text-[#A9DB9D]">Risk 2.0 / 10</p>
-              </div>
-              <p className="mt-2 text-sm leading-5 text-white/60">Recommended: no circular-feature intersection and low nearby edge response in the verified grid.</p>
+              <p className="font-tech text-4xl tracking-[-.07em] text-white">{isLiveCv ? selected.id : "E5"}</p>
+              <p className="pb-1 font-mono text-[10px] uppercase tracking-[.13em] text-[#A9DB9D]">{isLiveCv ? `Complexity ${selected.risk.toFixed(1)} / 10` : "Risk 2.0 / 10"}</p>
+            </div>
+              <p className="mt-2 text-sm leading-5 text-white/60">{isLiveCv ? "Live visual-complexity evidence for the selected grid cell. Human review is required; this is not a safety or landing recommendation." : "Recommended: no circular-feature intersection and low nearby edge response in the verified grid."}</p>
             </div>
           </div>
           <div className="border border-white/15 bg-[#0B0B0B] p-4 sm:p-5">
@@ -523,6 +549,12 @@ export default function Home() {
                 <span className="text-[#A9DB9D]">
                   Risk 2.0 / 10 / recommended
                 </span>
+              </div>
+            )}
+            {isLiveCv && (
+              <div className="flex items-center justify-between border-b border-[#F0C56B]/35 bg-[#12110D] px-3 py-2 font-mono text-[9px] uppercase tracking-[.13em]">
+                <span className="text-white/55">Live CV cell / {selected.id}</span>
+                <span className="text-[#F0C56B]">Complexity {selected.risk.toFixed(1)} / 10 / review</span>
               </div>
             )}
             <div className="relative mt-4 aspect-[16/8] overflow-hidden border border-white/10 bg-black">
@@ -568,13 +600,7 @@ export default function Home() {
 
         <div className="mx-auto max-w-[1500px] px-5 pb-8 sm:px-8 lg:px-10">
           <div className="grid border border-white/12 bg-[#090909] sm:grid-cols-5">
-            {[
-              ["01", "Acquire", "terrain loaded"],
-              ["02", "Process", "vision pass"],
-              ["03", "Evidence", "inspect signals"],
-              ["04", "Labels", "review terrain classes"],
-              ["05", "Decide", "E5 recommended"],
-            ].map(([number, title, state], index) => (
+            {workflowSteps.map(([number, title, state], index) => (
               <div key={title} className={`flex items-center gap-3 border-b border-white/10 px-4 py-3 sm:border-b-0 sm:border-r ${index === 4 ? "border-r-0 bg-[#0C120C]" : ""}`}>
                 <span className={`font-mono text-[9px] ${index === 4 ? "text-[#E26D61]" : "text-white/35"}`}>{number}</span>
                 <span><span className="block font-mono text-[9px] uppercase tracking-[.13em] text-white/75">{title}</span><span className="mt-1 block font-mono text-[8px] uppercase tracking-[.1em] text-white/40">{state}</span></span>
@@ -588,11 +614,9 @@ export default function Home() {
         <div className="mx-auto max-w-[1500px] px-5 py-12 sm:px-8 lg:px-10 lg:py-14">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[.19em] text-[#E26D61]">
-                02 / Computer vision review
-              </p>
+              <p className="font-mono text-[10px] uppercase tracking-[.19em] text-[#E26D61]">02 / {isLiveCv ? "Live CV review" : "Computer vision review"}</p>
               <h2 className="mt-3 font-tech text-3xl tracking-[-.05em] text-white sm:text-4xl">
-                Verified descent review
+                {isLiveCv ? "Live terrain review" : "Verified descent review"}
               </h2>
             </div>
             <p className="max-w-md text-sm leading-6 text-white/55">
@@ -601,11 +625,7 @@ export default function Home() {
             </p>
           </div>
           {stage === "processing" && (
-            <ProcessingPanel
-              progress={progress}
-              completed={complete}
-              steps={processingSteps}
-            />
+            <ProcessingPanel progress={progress} completed={complete} steps={processingSteps} liveUpload={Boolean(upload)} />
           )}
           {stage === "awaiting-api" && (
             <div className="mt-8 border-l-2 border-[#F0C56B] bg-[#12110D] px-5 py-4">
@@ -657,8 +677,8 @@ export default function Home() {
                     alt="Mars terrain analysis"
                     className={`absolute inset-0 h-full w-full object-cover ${view === "zones" ? "opacity-50" : ""}`}
                   />
-                  {isVerified && (view === "risk" || view === "zones") && (
-                    <RiskGrid selected={selectedId} onSelect={setSelectedId} />
+                  {(isVerified || activeCv) && (view === "risk" || view === "zones") && (
+                    <RiskGrid selected={selectedId} onSelect={setSelectedId} zones={analysisZones} />
                   )}
                   {view === "zones" && (
                     <div className="pointer-events-none absolute bottom-[1%] left-[80%] grid h-[19%] w-[19%] place-items-center border-2 border-[#D6F0CF] bg-[#69AB63]/20">
@@ -702,14 +722,14 @@ export default function Home() {
                 </div>
                 <dl className="divide-y divide-white/10">
                   <Stat
-                    label="Circular candidates"
-                    value="22"
-                    note="Hough circle transform"
+                    label={isLiveCv ? "Circular-shape candidates" : "Circular candidates"}
+                    value={analysisFeatures.length.toString()}
+                    note={isLiveCv ? "connected-edge geometry" : "Hough circle transform"}
                   />
                   <Stat
                     label="Edge response"
-                    value="10,484"
-                    note="Canny edge pixels"
+                    value={(activeCv?.edgePixelCount ?? 10484).toLocaleString()}
+                    note={isLiveCv ? "Sobel-gradient edge pixels" : "Canny edge pixels"}
                   />
                   <Stat
                     label="Candidate zones"
@@ -718,8 +738,8 @@ export default function Home() {
                   />
                   <Stat
                     label="Preferred zones"
-                    value="7"
-                    note="risk score ≤ 3"
+                    value={analysisZones.filter(zone => zone.classification === "PREFERRED").length.toString()}
+                    note={isLiveCv ? "lower-complexity cells" : "risk score ≤ 3"}
                   />
                 </dl>
                 <div className="p-5">
@@ -727,9 +747,9 @@ export default function Home() {
                     Source result
                   </p>
                   <p className="mt-2 text-sm leading-6 text-white/60">
-                    Verified local OpenCV pass. Circular candidates and edge
-                    response remain visible for review rather than being
-                    presented as confirmed geology.
+                    {isLiveCv
+                      ? activeCv?.disclaimer
+                      : "Verified local OpenCV pass. Circular candidates and edge response remain visible for review rather than being presented as confirmed geology."}
                   </p>
                 </div>
               </aside>
@@ -755,8 +775,9 @@ export default function Home() {
                   </h2>
                 </div>
                 <p className="max-w-md text-sm leading-6 text-white/55">
-                  Each plate is generated from the same verified source image.
-                  Select a stage to inspect its real saved output.
+                  {isLiveCv
+                    ? "Each plate was generated during this uploaded image’s live deterministic CV analysis."
+                    : "Each plate is generated from the same verified source image. Select a stage to inspect its real saved output."}
                 </p>
               </div>
               <div className="mt-8 grid gap-px border border-white/15 bg-white/15 md:grid-cols-5">
@@ -799,18 +820,19 @@ export default function Home() {
                   </p>
                   <p className="mt-4 text-sm leading-6 text-white/60">
                     {selectedEvidence.description} Follow the sequence from RAW
-                    TERRAIN → PREPROCESSING → CANNY EDGE DETECTION → HOUGH
-                    CIRCLE DETECTION → HAZARD MAP → RISK GRID.
+                    TERRAIN → PREPROCESSING → EDGE DETECTION → CIRCULAR-SHAPE
+                    CANDIDATES → VISUAL-COMPLEXITY OVERLAY → GRID REVIEW.
                   </p>
                 </div>
                 <div className="border border-white/15">
                   <div className="border-b border-white/10 p-5">
                     <p className="font-mono text-[10px] uppercase tracking-[.16em] text-white/45">
-                      Circular feature coordinates
+                      {isLiveCv ? "Circular-shape candidate coordinates" : "Circular feature coordinates"}
                     </p>
                     <p className="mt-2 text-sm text-white/60">
-                      Sample of actual Hough candidates from the verified
-                      result. Radius is measured in source pixels.
+                      {isLiveCv
+                        ? "Deterministic candidates are derived from connected edge geometry. Radius is measured in source pixels."
+                        : "Sample of actual Hough candidates from the verified result. Radius is measured in source pixels."}
                     </p>
                   </div>
                   <div className="overflow-x-auto">
@@ -825,7 +847,7 @@ export default function Home() {
                         </tr>
                       </thead>
                       <tbody>
-                        {circularFeatures.map(feature => (
+                        {analysisFeatures.length ? analysisFeatures.map(feature => (
                           <tr
                             key={feature.id}
                             className="border-b border-white/10 text-white/70"
@@ -833,12 +855,12 @@ export default function Home() {
                             <td className="px-5 py-3 text-[#9BD392]">
                               {feature.id}
                             </td>
-                            <td className="px-5 py-3">Circular feature</td>
+                            <td className="px-5 py-3">{isLiveCv ? "Shape candidate" : "Circular feature"}</td>
                             <td className="px-5 py-3">{feature.x}</td>
                             <td className="px-5 py-3">{feature.y}</td>
                             <td className="px-5 py-3">{feature.r} PX</td>
                           </tr>
-                        ))}
+                        )) : <tr className="text-white/45"><td className="px-5 py-4" colSpan={5}>No circular-shape candidates met the deterministic review threshold.</td></tr>}
                       </tbody>
                     </table>
                   </div>
@@ -926,9 +948,9 @@ export default function Home() {
                       <tr>
                         <th className="px-5 py-4 font-normal">Rank</th>
                         <th className="px-5 py-4 font-normal">Zone</th>
-                        <th className="px-5 py-4 font-normal">Risk</th>
+                        <th className="px-5 py-4 font-normal">{isLiveCv ? "Complexity" : "Risk"}</th>
                         <th className="px-5 py-4 font-normal">Edge density</th>
-                        <th className="px-5 py-4 font-normal">Decision</th>
+                        <th className="px-5 py-4 font-normal">{isLiveCv ? "Review band" : "Decision"}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -955,7 +977,7 @@ export default function Home() {
                             {(zone.edgeDensity * 100).toFixed(2)}%
                           </td>
                           <td className="px-5 py-4 text-white/60">
-                            {index === 0 ? "RECOMMENDED" : "ALTERNATE"}
+                            {isLiveCv ? zone.classification : index === 0 ? "RECOMMENDED" : "ALTERNATE"}
                           </td>
                         </tr>
                       ))}
@@ -969,7 +991,7 @@ export default function Home() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-mono text-[10px] uppercase tracking-[.17em] text-[#A9DB9D]">
-                      Official mission output
+                      {isLiveCv ? "Live visual-complexity review" : "Official mission output"}
                     </p>
                     <h3 className="mt-5 font-tech text-7xl leading-none tracking-[-.09em] text-white">
                       {selected.id}
@@ -979,7 +1001,7 @@ export default function Home() {
                 </div>
                 <div className="mt-7 border-y border-[#69AB63]/35 py-5">
                   <p className="font-mono text-[9px] uppercase tracking-[.14em] text-white/45">
-                    Risk score
+                    {isLiveCv ? "Complexity score" : "Risk score"}
                   </p>
                   <p className="mt-2 font-tech text-4xl tracking-[-.06em] text-[#E7F4E2]">
                     {selected.risk.toFixed(1)}{" "}
@@ -988,26 +1010,20 @@ export default function Home() {
                     </span>
                   </p>
                   <p className="mt-5 font-mono text-[9px] uppercase tracking-[.14em] text-[#A9DB9D]">
-                    Evidence confidence / High
+                    {isLiveCv ? "Deterministic CV evidence / review required" : "Evidence confidence / High"}
                   </p>
                 </div>
                 <div className="mt-6 space-y-3 text-sm leading-6 text-white/70">
-                  <p className="flex gap-3">
-                    <Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />
-                    No circular-feature intersection in the selected cell.
-                  </p>
-                  <p className="flex gap-3">
-                    <Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />
-                    Low nearby rock-edge response in the computed grid.
-                  </p>
-                  <p className="flex gap-3">
-                    <Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />
-                    Largest open candidate area among ranked zones.
-                  </p>
-                  <p className="flex gap-3">
-                    <Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />
-                    Lowest risk output in the verified local pass.
-                  </p>
+                  {isLiveCv ? <>
+                    <p className="flex gap-3"><Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />This cell has {Math.round(selected.edgeDensity * 100)}% detected edge coverage.</p>
+                    <p className="flex gap-3"><Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />Circular-shape pressure is {selected.circlePressure.toFixed(2)} in this cell.</p>
+                    <p className="flex gap-3"><Info className="mt-1 size-4 shrink-0 text-[#F0C56B]" />This ranking is visual-complexity evidence only, not a landing or safety decision.</p>
+                  </> : <>
+                    <p className="flex gap-3"><Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />No circular-feature intersection in the selected cell.</p>
+                    <p className="flex gap-3"><Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />Low nearby rock-edge response in the computed grid.</p>
+                    <p className="flex gap-3"><Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />Largest open candidate area among ranked zones.</p>
+                    <p className="flex gap-3"><Check className="mt-1 size-4 shrink-0 text-[#A9DB9D]" />Lowest risk output in the verified local pass.</p>
+                  </>}
                 </div>
                 <div className="mt-7 flex gap-3">
                   <Button
@@ -1040,7 +1056,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <p className="font-mono text-[8px] uppercase tracking-[.13em] text-white/35">
-              MB-01 / OpenCV classical vision / local demo
+              {isLiveCv ? "MB-01 / deterministic CV + ML / live upload" : "MB-01 / OpenCV classical vision / local demo"}
             </p>
             {stage === "results" && (
               <button
@@ -1061,10 +1077,12 @@ function ProcessingPanel({
   progress,
   completed,
   steps,
+  liveUpload,
 }: {
   progress: number;
   completed: number;
   steps: string[];
+  liveUpload: boolean;
 }) {
   return (
     <div className="mt-8 grid gap-6 border border-white/15 bg-[#0B0B0B] p-5 sm:grid-cols-[.8fr_1.2fr] sm:p-7">
@@ -1076,8 +1094,9 @@ function ProcessingPanel({
           Processing terrain
         </h3>
         <p className="mt-3 text-sm leading-6 text-white/55">
-          Saved sample data is being surfaced through the scientific review
-          sequence.
+          {liveUpload
+            ? "Live ML segmentation and deterministic CV artifacts are being generated for this uploaded image."
+            : "Saved sample data is being surfaced through the scientific review sequence."}
         </p>
         <p className="mt-8 font-mono text-2xl tracking-[-.06em] text-white">
           {progress}%
@@ -1141,9 +1160,11 @@ function Stat({
 function RiskGrid({
   selected,
   onSelect,
+  zones,
 }: {
   selected: string;
   onSelect: (id: string) => void;
+  zones: Zone[];
 }) {
   return (
     <div className="absolute inset-0 grid grid-cols-5 grid-rows-5">

@@ -15,7 +15,7 @@ export const segmentationRouter = router({
         predictionUrl: result.predictionUrl,
         overlayUrl: result.overlayUrl,
         modelVersion: result.model.version,
-        metricsJson: JSON.stringify({ classCounts: result.classCounts, width: result.width, height: result.height }),
+        metricsJson: JSON.stringify({ classCounts: result.classCounts, width: result.width, height: result.height, cv: result.cv }),
       });
       return result;
     }),
