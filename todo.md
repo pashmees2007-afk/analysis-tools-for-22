@@ -32,3 +32,10 @@
 - [x] Replace the current typography with a sharper technical display and live-terminal reading system.
 - [x] Add restrained animated terminal ambience, scan lines, data pulses, and active-system motion without obscuring evidence content.
 - [x] Validate contrast, reduced-motion behavior, responsive presentation, build output, and publish the refined interface.
+
+## TerrainLens Terminal Workstation Redesign
+
+- [x] Replace the landing-page composition with a dense command-terminal workstation layout.
+- [x] Add clearly non-analytical live system streams and diagnostic panels that react to actual application state.
+- [x] Rebuild upload and evidence controls as command modules while keeping the real backend workflow and error states intact.
+- [x] Validate the redesigned interface, publish it, and confirm the visual direction is materially different.
