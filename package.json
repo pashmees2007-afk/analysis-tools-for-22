@@ -8,6 +8,7 @@
     "build": "tsc && cp -R src/models dist/models",
     "batch": "pnpm build && node scripts/run-batch.mjs",
     "check": "tsc --noEmit",
+    "verify:frontend-example": "node scripts/verify-frontend-evidence-example.mjs",
     "test": "vitest run"
   },
   "dependencies": {

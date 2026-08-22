@@ -17,4 +17,7 @@
 - [x] Stress-test the Mars-only gate with a tricky non-Mars input and document the mitigation for any bypass risk.
 - [x] Run a compact multi-scenario verification of the hardened Mars-source gate and report the results plainly.
 - [ ] Present the latest hardened Mars-source gate and edge-case test code for review before further changes.
+- [x] Revise the Terrain Lens hackathon pitch deck for technical accuracy, clearer story flow, and purposeful animation.
+- [x] Provide a typed frontend component that replaces misleading confidence labels with defined analysis results.
 - [x] Prepare a simple judge-ready guide explaining the architecture, trained model, computer vision, validation, safeguards, and limitations.
+- [ ] Invite reelrecaps.youtube@gmail.com and rohanrangapure18@gmail.com as GitHub collaborators with write access.

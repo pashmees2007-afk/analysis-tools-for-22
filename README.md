@@ -80,6 +80,10 @@ The trained model should run only when the backend accepts an image as a Mars in
 
 For a plain-English walkthrough of the full analysis layer, including model specifications, evaluation metrics, computer-vision basics, source verification, limitations, and ready-to-use judge answers, see [`docs/judge-guide-analysis-tool.md`](docs/judge-guide-analysis-tool.md).
 
+## Frontend Evidence Labels
+
+Use [`examples/AnalysisEvidencePanel.tsx`](examples/AnalysisEvidencePanel.tsx) and [`docs/frontend-evidence-contract.md`](docs/frontend-evidence-contract.md) to render verified model coverage, visual-complexity review cells, and source-gate status without inventing misleading confidence or safety labels.
+
 ## Repository Map
 
 | Path | Purpose |
