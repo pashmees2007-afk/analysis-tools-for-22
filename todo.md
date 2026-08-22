@@ -171,4 +171,4 @@
 
 ## GitHub Publication
 
-- [ ] Commit and push the completed dynamic CV implementation to the analysis-tools-for-22 repository.
+- [x] Commit and push the completed dynamic CV implementation to the analysis-tools-for-22 repository on the dedicated dynamic-cv-webapp branch, preserving its existing master branch.
