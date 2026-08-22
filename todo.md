@@ -26,3 +26,9 @@
 - [x] Implement image intake, engine configuration, health state, real analysis requests, and explicit fallback/error handling.
 - [x] Build the image-first evidence workspace with available artifacts, metrics, candidate zones, and limited audit-history display.
 - [x] Validate the frontend against the current backend contract, document unavailable capabilities, and publish the work to analysis-tools-for-22; full live analysis requires server-only backend URL and API-key configuration.
+
+## TerrainLens Terminal Visual Refinement
+
+- [x] Replace the current typography with a sharper technical display and live-terminal reading system.
+- [x] Add restrained animated terminal ambience, scan lines, data pulses, and active-system motion without obscuring evidence content.
+- [x] Validate contrast, reduced-motion behavior, responsive presentation, build output, and publish the refined interface.

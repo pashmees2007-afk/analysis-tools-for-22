@@ -122,6 +122,12 @@ function App() {
 
   return (
     <main className="app-shell">
+      <div className="terminal-field" aria-hidden="true">
+        <span className="terminal-line line-a">TL// LINK: {health === true ? "CONNECTED" : health === false ? "UNREACHABLE" : "CHECKING"}</span>
+        <span className="terminal-line line-b">TL// SESSION: {stage.toUpperCase()}</span>
+        <span className="terminal-line line-c">TL// INPUT: {file ? "IMAGE STAGED" : "AWAITING IMAGE"}</span>
+        <span className="terminal-line line-d">TL// ENGINE: {engine.toUpperCase()} // TARGET: {target.toUpperCase()}</span>
+      </div>
       <header className="topbar">
         <button className="wordmark" onClick={reset} aria-label="Return to TerrainLens intake"><span className="mark">TL</span><span>TERRAINLENS<small>PLANETARY EVIDENCE WORKSPACE</small></span></button>
         <nav aria-label="Primary navigation"><a href="#intake">INTAKE</a><a href="#workspace">WORKSPACE</a><button onClick={loadHistory}>ARCHIVE</button></nav>
