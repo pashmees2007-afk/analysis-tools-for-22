@@ -168,3 +168,7 @@
 - [x] Add automated tests and run an end-to-end uploaded-image validation for the combined ML-plus-CV pipeline.
 - [x] Derive every live-upload mission summary and progress label from the dynamic CV result rather than the saved sample defaults.
 - [x] Auto-select the lowest-complexity uploaded-image grid cell and confirm the live summary matches the ranked grid.
+
+## GitHub Publication
+
+- [ ] Commit and push the completed dynamic CV implementation to the analysis-tools-for-22 repository.
